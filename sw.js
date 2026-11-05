@@ -1,5 +1,5 @@
 // Offline support: serve the saved copy immediately, then refresh it from the network.
-const CACHE = 'tarsi-cse-v1';
+const CACHE = 'tarsi-cse-v2';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'questions.js', 'manifest.webmanifest', 'assets/icon.svg', 'assets/nunito.woff2'];
 
 self.addEventListener('install', e => {

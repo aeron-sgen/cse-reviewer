@@ -132,10 +132,21 @@ async function answer(p, correct) { const q = await currentQ(p); if (!q) throw n
   fs.writeFileSync(SHOTS + 'bad.json', '{"hello":1}'); await p.setInputFiles('input[type=file]', SHOTS + 'bad.json'); await p.waitForSelector('.toast:has-text("not a valid")'); ok('D5 invalid backup refused', true);
   await c.close(); }
 
+// ---- F. Guide tab
+{ const { p, c } = await ctx();
+  await p.click('.mobile-tabs a[href="#/guide"]'); await p.waitForSelector('.guide');
+  const text = await p.textContent('main'); const n = await p.evaluate(() => window.CSE_QUESTIONS.length);
+  ok('F1 Guide opens from the tab bar', (await p.textContent('h1')) === 'How this app works' && await p.locator('.mobile-tabs a.on').textContent() === 'Guide');
+  ok('F2 Guide uses live numbers', text.includes(`${n} original practice questions`) && text.includes('38 short lessons') && text.includes('5 hearts') && text.includes('170 items in 3 h 10 min') && text.includes('50 items in 56 min') && text.includes('2 separate sessions') && text.includes('30 XP'));
+  await p.screenshot({ path: SHOTS + 'guide-mobile.png', fullPage: true });
+  for (const w of [320, 390]) { await p.setViewportSize({ width: w, height: 700 }); const fit = await p.evaluate(() => [...document.querySelectorAll('.mobile-tabs .tab')].map(t => { const r = document.createRange(); r.selectNodeContents(t); return r.getClientRects().length && t.scrollWidth <= t.clientWidth && t.getBoundingClientRect().height < 70; })); ok(`F3 five tabs fit on one line at ${w}px`, fit.length === 5 && fit.every(Boolean), JSON.stringify(fit)); }
+  await p.setViewportSize({ width: 390, height: 844 }); await p.goto(URL0 + '#/learn'); await p.reload(); await p.waitForSelector('.node'); ok('F4 path still loads after visiting Guide', await p.locator('.node').count() === 38);
+  await c.close(); }
+
 // ---- E. Layout on every tab: desktop, dark, narrow. Storage blocked. Offline.
 for (const [name, opts] of [['desktop', { viewport: { width: 1280, height: 800 } }], ['dark-mobile', { colorScheme: 'dark' }], ['narrow-320', { viewport: { width: 320, height: 640 } }], ['dark-desktop', { viewport: { width: 1280, height: 800 }, colorScheme: 'dark' }]]) {
   const { p, c } = await ctx(opts); const over = {};
-  for (const t of ['learn', 'practice', 'mock', 'me']) { await p.goto(URL0 + '#/' + t); await p.waitForTimeout(120); over[t] = await overflow(p); await p.screenshot({ path: `${SHOTS}${name}-${t}.png` }); }
+  for (const t of ['learn', 'practice', 'mock', 'me', 'guide']) { await p.goto(URL0 + '#/' + t); await p.waitForTimeout(120); over[t] = await overflow(p); await p.screenshot({ path: `${SHOTS}${name}-${t}.png` }); }
   await p.goto(URL0 + '#/learn'); await p.waitForSelector('.node'); await p.locator('.node').first().click(); await p.waitForSelector('.question'); await answer(p, false); await p.waitForSelector('.foot.bad'); await p.screenshot({ path: `${SHOTS}${name}-feedback.png` });
   const sk = await overflow(p);
   ok(`E ${name}: no sideways scrolling`, Object.values(over).every(v => v <= 0) && sk <= 0, JSON.stringify(over));

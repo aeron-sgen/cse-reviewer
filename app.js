@@ -178,7 +178,7 @@
   });
 
   /* ---------- Shell ---------- */
-  const TABS = [['learn', 'Learn', 'path'], ['practice', 'Practice', 'target'], ['mock', 'Mock', 'clock'], ['me', 'Progress', 'user']];
+  const TABS = [['learn', 'Learn', 'path'], ['practice', 'Practice', 'target'], ['mock', 'Mock', 'clock'], ['me', 'Progress', 'user'], ['guide', 'Guide', 'book']];
   function shell(tab, ...content) {
     const links = () => TABS.map(([id, label, ic]) => h('a', { class: 'tab' + (tab === id ? ' on' : ''), href: '#/' + id, 'aria-current': tab === id ? 'page' : null }, icon(ic), label));
     const streak = currentStreak();
@@ -586,8 +586,59 @@
       h('p', { class: 'fine' }, 'Unofficial personal study tool. All questions are original practice items, not actual exam questions. Not affiliated with or endorsed by the Civil Service Commission. Answers may contain mistakes, so check anything important against the cited law.')));
   }
 
+  /* ---------- Guide ---------- */
+  function viewGuide() {
+    const section = (title, ic, unit, ...items) => h('section', { class: 'card guide c-' + unit },
+      h('div', { class: 'row' }, h('div', { class: 'tile' }, icon(ic)), h('h2', { class: 'grow' }, title)),
+      h('ul', null, items.map(t => h('li', null, t))));
+    const mockLine = kind => `${MOCKS[kind].name}: ${Math.min(MOCKS[kind].items, QUESTIONS.length)} items in ${Math.floor(MOCKS[kind].mins / 60) ? Math.floor(MOCKS[kind].mins / 60) + ' h ' : ''}${MOCKS[kind].mins % 60} min.`;
+    mount(shell('guide',
+      h('h1', { class: 'title' }, 'How this app works'),
+      h('p', { class: 'sub' }, `Tarsi is a personal study app for the Career Service Examination, Professional level, on 14 March 2027. It has ${QUESTIONS.length} original practice questions following the subjects CSC published.`),
+      section('Learn', 'path', 'general',
+        `The path has ${LESSONS.length} short lessons across 4 units: General Information, Verbal Ability, Analytical Ability and Numerical Ability.`,
+        'Pick an answer, press Check, then read the explanation. General Information answers also name their legal source.',
+        'Miss a question and it comes back later in the same lesson. You finish when every question has been answered correctly.',
+        'No lesson is locked, so you can start anywhere or replay one.'),
+      section('Hearts', 'heart', 'numerical',
+        `Each lesson starts with ${HEARTS} hearts, and every wrong answer costs one, including on retried questions.`,
+        'At zero the lesson ends. You can try it again right away, with no waiting. That attempt does not complete the lesson or earn XP.',
+        'Your answers still count in your stats, and first-try misses still go to your Mistakes list.',
+        'Practice and mock exams do not use hearts.'),
+      section('XP, streak and daily goal', 'bolt', 'analytical',
+        'Finishing a lesson or practice set earns 2 XP per question right on the first try, plus 5 XP if all of them were.',
+        'Finishing a mock exam earns 1 XP for every 2 correct answers.',
+        `Earning XP on a day keeps your streak going. Miss a full day and it starts over. The daily goal is ${DAILY_GOAL} XP.`),
+      section('Practice', 'target', 'verbal',
+        `Mistakes collects questions you missed. Each one leaves the list after you get it right in ${CLEAR_AFTER} separate sessions.`,
+        'Weakest skill drills the skill with your lowest score, once you have answered enough of it.',
+        'Quick 10 gives you ten random questions, mixed or from one subject.'),
+      section('Mock exam', 'clock', 'analytical',
+        mockLine('full'), mockLine('mini'),
+        'There are no answers or hints until you submit. You can go back, mark questions for review and jump around with the question grid.',
+        'Pause stops the clock, and you can resume later. When time runs out, the exam submits itself.',
+        'Unanswered questions count as wrong. Missed questions go to your Mistakes list.',
+        'CSC does not publish the item count, time limit or subject split, so the length is based on unofficial reports. Treat 80% as a target and not a prediction.'),
+      section('Your progress and data', 'user', 'general',
+        'Progress shows your scores for each skill, past mock results and flagged questions.',
+        'Everything is saved only in this browser on this device. There are no accounts and nothing is sent anywhere.',
+        'Clearing browser data erases your progress, so use Save backup now and then. Restore moves it to another device.',
+        'After the first load, the app can run without internet.'),
+      section('If an answer looks wrong', 'flag', 'numerical',
+        'Tap "Answer looks wrong?" under the explanation and add a note if you like. It appears on your Progress page.',
+        'The questions were written and checked with AI, with no human expert review, so mistakes are possible. For anything important, check the cited law.'),
+      h('section', { class: 'card guide side-only' }, h('h2', null, 'Keyboard shortcuts'),
+        h('ul', null, h('li', null, '1 to 4: pick an answer'), h('li', null, 'Enter: check and continue in lessons'), h('li', null, 'Left and right arrows: move between mock exam questions'))),
+      h('section', { class: 'card guide' }, h('h2', null, 'About the exam'),
+        h('ul', null,
+          h('li', null, 'Date: Sunday, 14 March 2027. Passing grade: a general rating of at least 80.00.'),
+          h('li', null, 'Filing opened 2 November 2026 and closes when slots run out. File with your CSC regional or field office.'),
+          h('li', null, h('a', { href: ANNOUNCEMENT, target: '_blank', rel: 'noopener' }, 'Read CSC Examination Announcement No. 06, s. 2026')))),
+      h('p', { class: 'fine' }, 'Unofficial personal study tool. All questions are original practice items, not actual exam questions. Not affiliated with or endorsed by the Civil Service Commission.')));
+  }
+
   /* ---------- Router ---------- */
-  const VIEWS = { learn: viewLearn, practice: viewPractice, mock: viewMockHome, me: viewMe };
+  const VIEWS = { learn: viewLearn, practice: viewPractice, mock: viewMockHome, me: viewMe, guide: viewGuide };
   function route() { (VIEWS[location.hash.replace(/^#\/?/, '')] || viewLearn)(); }
   function go(name) { if (location.hash === '#/' + name) route(); else location.hash = '#/' + name; }
   window.addEventListener('hashchange', route);
